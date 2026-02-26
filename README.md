@@ -8,8 +8,6 @@ A personalized news recommendation system for PSX investors using NLP embeddings
 
 ## Project Status
 
-This project is currently in active development. Here is where we stand:
-
 | Step | Status |
 |---|---|
 | Data Collection | ✅ Done |
@@ -17,10 +15,12 @@ This project is currently in active development. Here is where we stand:
 | Preprocessing | ✅ Done |
 | Embeddings (Word2Vec + SBERT) | ✅ Done |
 | Embedding Comparison | ✅ Done |
-| Recommender Engine | 🔄 In progress |
-| User Profiling | 🔄 In progress |
-| Streamlit Interface | ⏳ Planned |
+| Article Tagging | ✅ Done |
+| Reading History Simulation | ✅ Done |
+| User Profile Vectors | ✅ Done |
+| Recommender Engine | 🔄 Next |
 | Evaluation (Precision@K, NDCG) | ⏳ Planned |
+| Streamlit Interface | ⏳ Planned |
 
 ---
 
@@ -28,22 +28,27 @@ This project is currently in active development. Here is where we stand:
 
 ```
 psx-pnr/
-├── notebooks/                        # Start here — run these in order
-│   ├── 01_eda_cnhpsx.ipynb           # EDA on CNH-PSX Mendeley dataset
-│   ├── 02_eda_pakistan_news.ipynb    # EDA on Pakistan News Headlines
-│   ├── 03_eda_psx_stocks.ipynb       # EDA on PSX Stock Market Data
-│   ├── 04_preprocessing.ipynb        # Preprocessing pipeline for all datasets
-│   └── 05_embeddings.ipynb           # Word2Vec + SBERT training and comparison
-├── src/                              # Clean reusable modules (used by notebooks)
-│   ├── text_cleaner.py               # Generic text cleaning functions
-│   ├── dataset_preprocessor.py       # Dataset-specific preprocessing
-│   ├── embeddings.py                 # Word2Vec and SBERT embedding generation
-│   └── recommender.py                # (in progress) Top-K recommendation engine
+├── notebooks/
+│   ├── 01_eda_cnhpsx.ipynb
+│   ├── 02_eda_pakistan_news.ipynb
+│   ├── 03_eda_psx_stocks.ipynb
+│   ├── 04_preprocessing.ipynb
+│   ├── 05_embeddings.ipynb
+│   ├── 06_tagging_history.ipynb
+│   └── 07_profile_vectors.ipynb
+├── src/
+│   ├── text_cleaner.py
+│   ├── dataset_preprocessor.py
+│   ├── embeddings.py
+│   ├── user_profile.py
+│   ├── article_tagger.py
+│   ├── history_simulator.py
+│   └── profile_builder.py
 ├── data/
-│   ├── raw/                          # Original CSV files (not committed to git)
-│   └── processed/                    # Cleaned CSVs and saved embeddings (.npy, .model)
-├── doc/                              # PDF exports of all notebooks + slides
-├── app.py                            # (planned) Streamlit interface
+│   ├── raw/                         # Original CSVs (not committed)
+│   └── processed/                   # Cleaned CSVs + embeddings (LFS)
+├── doc/                             # PDF exports of all notebooks + slides
+├── app.py                           # (planned) Streamlit interface
 └── requirements.txt
 ```
 
@@ -53,15 +58,15 @@ psx-pnr/
 
 | Dataset | Source | Usage | Size after cleaning |
 |---|---|---|---|
-| CNH-PSX Categorized Financial News | [Mendeley](https://data.mendeley.com/datasets/mc4s7zvx9c/1) | Main news corpus for recommendation | 8 858 headlines |
-| Pakistan News Headlines | [Kaggle](https://www.kaggle.com/datasets/zusmani/pakistan-news-headlines) | Word2Vec training corpus | 25 912 articles |
-| PSX Stock Market Data 2017–2025 | [Kaggle](https://www.kaggle.com/datasets/fayaznoor10/pakistan-stock-market-data-20172025) | Optional recency weighting | 813 588 rows, 891 tickers |
+| CNH-PSX Categorized Financial News | [Mendeley](https://data.mendeley.com/datasets/mc4s7zvx9c/1) | Main news corpus | 8 858 headlines |
+| Pakistan News Headlines | [Kaggle](https://www.kaggle.com/datasets/zusmani/pakistan-news-headlines) | Word2Vec training + article pool | 25 912 articles |
+| PSX Stock Market Data 2017–2025 | [Kaggle](https://www.kaggle.com/datasets/fayaznoor10/pakistan-stock-market-data-20172025) | Recency weighting | 813 588 rows, 891 tickers |
 
 ---
 
 ## Getting Started
 
-### 1. Clone the repo and go into the project folder
+### 1. Clone and enter the project
 
 ```bash
 cd psx-pnr
@@ -72,7 +77,7 @@ cd psx-pnr
 ```bash
 python3 -m venv venv
 source venv/bin/activate        # Linux / WSL
-venv\Scripts\activate           # Windows PowerShell
+venv\Scripts\activate           # Windows
 ```
 
 ### 3. Install dependencies
@@ -81,22 +86,11 @@ venv\Scripts\activate           # Windows PowerShell
 pip install -r requirements.txt
 ```
 
-The main libraries used are:
+Main libraries: **pandas**, **numpy**, **scikit-learn**, **nltk**, **gensim**, **sentence-transformers**, **streamlit**, **jupyter**, **matplotlib**, **seaborn**, **tqdm**
 
-- **pandas** — data manipulation
-- **numpy** — numerical operations
-- **scikit-learn** — cosine similarity, evaluation metrics
-- **nltk** — stopword removal, lemmatization
-- **gensim** — Word2Vec training
-- **sentence-transformers** — SBERT pretrained models
-- **streamlit** — web interface (planned)
-- **jupyter** — notebooks
-- **matplotlib / seaborn** — visualizations
-- **tqdm** — progress bars
+### 4. Download the datasets
 
-### 4. Download the datasets (if necessary)
-
-Download the raw CSV files from the links above and place them in `data/raw/`:
+Place raw CSV files in `data/raw/`:
 
 ```
 data/raw/
@@ -114,38 +108,58 @@ jupyter notebook --no-browser
 
 > On WSL, copy the `http://127.0.0.1:8888/?token=...` link into your Windows browser.
 
-We recommend running the notebooks rather than the `src/` scripts directly — they include visualizations, outputs, and step-by-step explanations. The `src/` modules are the clean reusable code called by the notebooks.
+We recommend running the notebooks rather than the `src/` scripts directly. The `src/` modules are clean reusable code called by the notebooks.
 
 ---
 
-## Key Findings So Far
+## Key Findings
 
-### Preprocessing
-- CNH-PSX headlines contained `['...']` artifacts that were cleaned
-- 3 354 duplicate headlines removed from CNH-PSX (~27%)
-- Pakistan News: 24 574 duplicates removed, date column partially unparseable — used text only for Word2Vec
-- PSX Stocks: filtered rows with zero volume, 2 767 NaN filled in `CHANGE (%)`
-
-### Embeddings
-
-We compared 4 models on 3 tests (CNH-PSX headlines, Pakistan News sections, PSX ticker mentions):
+### Embeddings (notebook 05)
 
 | Model | CNH-PSX Δ | Stocks Δ | Notes |
 |---|---|---|---|
-| Word2Vec (clean) | **0.22** | — | Best for PSX-specific news |
+| Word2Vec (clean) | **0.22** | — | Best for headline similarity |
 | SBERT-MiniLM (raw) | 0.07 | 0.03 | Good balance, fast |
 | SBERT-MPNet (raw) | -0.005 | **0.11** | Best for ticker matching |
-| SBERT-Multilingual (raw) | -0.04 | 0.06 | Underperforms on this corpus |
+| SBERT-Multi (raw) | -0.04 | 0.06 | Underperforms |
 
-**Key insight**: SBERT performs better on raw headlines than preprocessed ones — aggressive cleaning (stopword removal, lemmatization) removes context that SBERT needs. Word2Vec benefits from cleaning since it works word by word.
+SBERT performs better on raw headlines — aggressive cleaning removes context it needs.
 
-**Chosen strategy**: Word2Vec for the main recommendation engine, SBERT-MPNet for ticker-to-news linking.
+### User Profiling (notebook 07)
+
+| Model | Same sector Δ | Notes |
+|---|---|---|
+| Word2Vec | -0.037 ❌ | Collapses all financial vocab together |
+| SBERT-MPNet (raw) | **+0.175** ✅ | Clear sector separation |
+
+**SBERT-MPNet chosen for user profiling and recommender.**
+
+---
+
+## Synthetic Users
+
+| User | Sector | Sub-focus |
+|---|---|---|
+| User_1 | Construction | cement-heavy |
+| User_2 | Construction | infrastructure-heavy |
+| User_3 | Banking | — |
+| User_4 | Energy | — |
+
+---
+
+## Large Files (Git LFS)
+
+The following file types are tracked with Git LFS:
+
+```
+*.csv *.npy *.npz *.model
+```
 
 ---
 
 ## Documentation
 
-All notebook outputs (EDA results, preprocessing summaries, embedding comparisons) are exported as PDFs in the `doc/` folder, along with the project slides.
+All notebook outputs are exported as PDFs in `doc/`, along with the project slides.
 
 ---
 
@@ -154,22 +168,27 @@ All notebook outputs (EDA results, preprocessing summaries, embedding comparison
 ```
 Raw Data (CSV)
      ↓
-Preprocessing (text_cleaner.py + dataset_preprocessor.py)
+Preprocessing → data/processed/*.csv
      ↓
-Embeddings (embeddings.py) → .npy files saved in data/processed/
+Embeddings (Word2Vec + SBERT) → data/processed/*.npy
      ↓
-User Profile (interests + watchlist)
+Article Tagging (keyword matching)
      ↓
-Cosine Similarity + Ranking
+Reading History Simulation
      ↓
-Top-K News Recommendations
+User Profile Vectors → data/processed/user_profiles_*.npz
+     ↓
+[next] Cosine Similarity + Top-K Ranking
+     ↓
+[next] Streamlit Interface
 ```
 
 ---
 
 ## Known Limitations
 
-- CNH-PSX corpus only covers 2006–2017 — no recent news
-- Headlines are short (~7 words on average) which limits embedding quality
-- No full article text available — headlines only
-- Synthetic user profiles used (no real user interaction data)
+- CNH-PSX corpus covers 2006–2017 only — no recent news
+- Headlines are short (~7 words) which limits embedding quality
+- No full article text — headlines only
+- Synthetic user profiles — no real interaction data
+- Construction sector underrepresented (185 articles vs 1 144 Banking, 822 Energy)
