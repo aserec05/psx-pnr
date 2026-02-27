@@ -32,7 +32,7 @@ def cosine_scores(
 def recency_boost(
     df_articles: pd.DataFrame,
     df_stocks: pd.DataFrame,
-    boost_weight: float = 0.2
+    boost_weight: float = 0.05
 ) -> np.ndarray:
     """
     Give a small bonus to articles that mention a ticker

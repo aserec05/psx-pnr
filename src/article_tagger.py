@@ -105,6 +105,10 @@ def combine_tagged_datasets(
     news["source"]             = "pakistan_news"
     news["text_for_embedding"] = news["text_clean"]
 
+    # Drop articles with no real content — SBERT gives them identical embeddings
+    cnhpsx = cnhpsx[~cnhpsx['headline'].str.strip().isin(['Pakistan', 'Newspaper', 'Business', 'Sport', ''])]
+    news   = news[~news['headline'].str.strip().isin(['Pakistan', 'Newspaper', 'Business', 'Sport', ''])]
+
     pool = pd.concat(
         [cnhpsx[["headline", "primary_tag", "tags", "source", "text_for_embedding"]],
           news[["headline",  "primary_tag", "tags", "source", "text_for_embedding"]]],
