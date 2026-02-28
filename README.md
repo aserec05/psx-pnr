@@ -18,8 +18,8 @@ A personalized news recommendation system for PSX investors using NLP embeddings
 | Article Tagging | ✅ Done |
 | Reading History Simulation | ✅ Done |
 | User Profile Vectors | ✅ Done |
-| Recommender Engine | 🔄 Next |
-| Evaluation (Precision@K, NDCG) | ⏳ Planned |
+| Recommender Engine | ✅ Done |
+| Formal Evaluation (Precision@K, NDCG@K) | ✅ Done |
 | Streamlit Interface | ⏳ Planned |
 
 ---
@@ -35,7 +35,9 @@ psx-pnr/
 │   ├── 04_preprocessing.ipynb
 │   ├── 05_embeddings.ipynb
 │   ├── 06_tagging_history.ipynb
-│   └── 07_profile_vectors.ipynb
+│   ├── 07_profile_vectors.ipynb
+│   ├── 08_recommender.ipynb
+│   └── 09_evaluation.ipynb
 ├── src/
 │   ├── text_cleaner.py
 │   ├── dataset_preprocessor.py
@@ -43,12 +45,21 @@ psx-pnr/
 │   ├── user_profile.py
 │   ├── article_tagger.py
 │   ├── history_simulator.py
-│   └── profile_builder.py
+│   ├── profile_builder.py
+│   ├── scorer.py
+│   ├── recommender.py
+│   └── evaluator.py
 ├── data/
-│   ├── raw/                         # Original CSVs (not committed)
-│   └── processed/                   # Cleaned CSVs + embeddings (LFS)
-├── doc/                             # PDF exports of all notebooks + slides
-├── app.py                           # (planned) Streamlit interface
+│   ├── raw/                              # Original CSVs (not committed)
+│   └── processed/
+│       ├── *.csv                         # Cleaned datasets + article pool
+│       ├── embeddings_pool_*.npy         # Pre-computed embeddings (LFS)
+│       ├── user_profiles_*.npz           # User profile vectors (LFS)
+│       ├── word2vec.model                # Trained W2V model (LFS)
+│       ├── recommendations/              # Top-K CSVs from notebook 08
+│       └── evaluation_results.csv        # Precision@K and NDCG@K results
+├── doc/                                  # PDF exports of all notebooks
+├── app.py                                # (planned) Streamlit interface
 └── requirements.txt
 ```
 
@@ -134,6 +145,19 @@ SBERT performs better on raw headlines — aggressive cleaning removes context i
 
 **SBERT-MPNet chosen for user profiling and recommender.**
 
+### Recommender Evaluation (notebooks 08 & 09)
+
+| Config | P@5 | P@10 | NDCG@5 | NDCG@10 |
+|---|---|---|---|---|
+| W2V — no boost | 0.45 | 0.45 | 0.42 | 0.45 |
+| W2V — recency boost | 0.25 | 0.20 | 0.27 | 0.37 |
+| **SBERT — no boost** | **0.55** | **0.55** | **0.63** | **0.70** |
+| SBERT — recency boost | 0.50 | 0.50 | 0.50 | 0.50 |
+
+**SBERT no boost is the best configuration across all metrics.**
+W2V fails to separate Construction from other financial sectors due to vocabulary overlap.
+The recency boost degrades results in both models — it favors active tickers regardless of user sector.
+
 ---
 
 ## Synthetic Users
@@ -172,13 +196,15 @@ Preprocessing → data/processed/*.csv
      ↓
 Embeddings (Word2Vec + SBERT) → data/processed/*.npy
      ↓
-Article Tagging (keyword matching)
+Article Tagging (keyword matching + word boundaries)
      ↓
-Reading History Simulation
+Reading History Simulation (10 clicks/user, 10% noise)
      ↓
 User Profile Vectors → data/processed/user_profiles_*.npz
      ↓
-[next] Cosine Similarity + Top-K Ranking
+Cosine Similarity + Top-K Ranking (± recency boost)
+     ↓
+Evaluation (Precision@K, NDCG@K) → evaluation_results.csv
      ↓
 [next] Streamlit Interface
 ```
@@ -191,4 +217,5 @@ User Profile Vectors → data/processed/user_profiles_*.npz
 - Headlines are short (~7 words) which limits embedding quality
 - No full article text — headlines only
 - Synthetic user profiles — no real interaction data
-- Construction sector underrepresented (185 articles vs 1 144 Banking, 822 Energy)
+- Construction sector underrepresented (66 articles vs 1 016 Banking, 773 Energy)
+- Recency boost too generic — favors active tickers regardless of user sector
