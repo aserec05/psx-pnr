@@ -20,7 +20,8 @@ A personalized news recommendation system for PSX investors using NLP embeddings
 | User Profile Vectors | ✅ Done |
 | Recommender Engine | ✅ Done |
 | Formal Evaluation (Precision@K, NDCG@K) | ✅ Done |
-| Streamlit Interface | ⏳ Planned |
+| Interactive Demo (4 profile modes) | ✅ Done |
+| Live News Streaming | ⏳ Planned |
 
 ---
 
@@ -37,7 +38,8 @@ psx-pnr/
 │   ├── 06_tagging_history.ipynb
 │   ├── 07_profile_vectors.ipynb
 │   ├── 08_recommender.ipynb
-│   └── 09_evaluation.ipynb
+│   ├── 09_evaluation.ipynb
+│   └── 10_custom_profile.ipynb
 ├── src/
 │   ├── text_cleaner.py
 │   ├── dataset_preprocessor.py
@@ -59,7 +61,6 @@ psx-pnr/
 │       ├── recommendations/              # Top-K CSVs from notebook 08
 │       └── evaluation_results.csv        # Precision@K and NDCG@K results
 ├── doc/                                  # PDF exports of all notebooks
-├── app.py                                # (planned) Streamlit interface
 └── requirements.txt
 ```
 
@@ -97,7 +98,7 @@ venv\Scripts\activate           # Windows
 pip install -r requirements.txt
 ```
 
-Main libraries: **pandas**, **numpy**, **scikit-learn**, **nltk**, **gensim**, **sentence-transformers**, **streamlit**, **jupyter**, **matplotlib**, **seaborn**, **tqdm**
+Main libraries: **pandas**, **numpy**, **scikit-learn**, **nltk**, **gensim**, **sentence-transformers**, **jupyter**, **ipywidgets**, **matplotlib**, **seaborn**, **tqdm**
 
 ### 4. Download the datasets
 
@@ -183,7 +184,7 @@ The following file types are tracked with Git LFS:
 
 ## Documentation
 
-All notebook outputs are exported as PDFs in `doc/`, along with the project slides.
+All notebook outputs are exported as PDFs in `doc/`.
 
 ---
 
@@ -206,7 +207,9 @@ Cosine Similarity + Top-K Ranking (± recency boost)
      ↓
 Evaluation (Precision@K, NDCG@K) → evaluation_results.csv
      ↓
-[next] Streamlit Interface
+Interactive Demo (notebook 10 — 4 profile modes)
+     ↓
+[planned] Live News Streaming
 ```
 
 ---
@@ -217,5 +220,5 @@ Evaluation (Precision@K, NDCG@K) → evaluation_results.csv
 - Headlines are short (~7 words) which limits embedding quality
 - No full article text — headlines only
 - Synthetic user profiles — no real interaction data
-- Construction sector underrepresented (66 articles vs 1 016 Banking, 773 Energy)
+- Construction sector underrepresented (66 articles out of 14 213 in the pool)
 - Recency boost too generic — favors active tickers regardless of user sector
