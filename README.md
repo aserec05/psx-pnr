@@ -21,7 +21,6 @@ A personalized news recommendation system for PSX investors using NLP embeddings
 | Recommender Engine | ✅ Done |
 | Formal Evaluation (Precision@K, NDCG@K) | ✅ Done |
 | Interactive Demo (4 profile modes) | ✅ Done |
-| Live News Streaming | ⏳ Planned |
 
 ---
 
@@ -146,14 +145,14 @@ SBERT performs better on raw headlines — aggressive cleaning removes context i
 
 **SBERT-MPNet chosen for user profiling and recommender.**
 
-### Recommender Evaluation (notebooks 08 & 09)
+### Recommender Evaluation (Cosine similarity)
 
-| Config | P@5 | P@10 | NDCG@5 | NDCG@10 |
+| Config | Sector Precision | Diversity | Mean Similarity | Mean Final Score |
 |---|---|---|---|---|
-| W2V — no boost | 0.45 | 0.45 | 0.42 | 0.45 |
-| W2V — recency boost | 0.25 | 0.20 | 0.27 | 0.37 |
-| **SBERT — no boost** | **0.55** | **0.55** | **0.63** | **0.70** |
-| SBERT — recency boost | 0.50 | 0.50 | 0.50 | 0.50 |
+| W2V — no boost | 0.425 | 1.50 | 0.9711 | 0.9711 |
+| W2V — recency boost | 0.200 | 2.25 | 0.9380 | 1.0530 |
+| **SBERT — no boost** | **0.550** | **1.50** | **0.7918** | **0.7918** |
+| SBERT — recency boost | 0.475 | 1.25 | 0.7786 | 0.8090 |
 
 **SBERT no boost is the best configuration across all metrics.**
 W2V fails to separate Construction from other financial sectors due to vocabulary overlap.
@@ -208,8 +207,7 @@ Cosine Similarity + Top-K Ranking (± recency boost)
 Evaluation (Precision@K, NDCG@K) → evaluation_results.csv
      ↓
 Interactive Demo (notebook 10 — 4 profile modes)
-     ↓
-[planned] Live News Streaming
+
 ```
 
 ---
